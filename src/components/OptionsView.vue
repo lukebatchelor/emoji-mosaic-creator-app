@@ -89,7 +89,7 @@ async function onGenerateClick() {
 }
 function onDownloadClick() {
   canvasRef.value?.toBlob(function (blob) {
-    saveAs(blob, 'mosaic.png');
+    saveAs(blob!, 'mosaic.png');
   });
 }
 </script>
