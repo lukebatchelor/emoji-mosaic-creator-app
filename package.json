@@ -13,6 +13,7 @@
     "color-diff": "^1.2.0",
     "core-js": "^3.8.3",
     "fast-average-color": "^9.3.0",
+    "file-saver": "^2.0.5",
     "roboto-fontface": "*",
     "vue": "^3.2.13",
     "vue-router": "^4.0.0",

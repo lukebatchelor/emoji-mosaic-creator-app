@@ -7,15 +7,26 @@
       <p class="text-body">Preview</p>
       <canvas ref="canvasRef" :class="{ loadingFilter: loading }"></canvas>
 
-      <v-btn
-        color="success"
-        @click="onGenerateClick"
-        :disabled="loading"
-        :loading="loading"
-      >
-        Generate
-        <template v-slot:loader> Loading... </template>
-      </v-btn>
+      <div class="flex">
+        <v-btn
+          color="success"
+          @click="onGenerateClick"
+          :disabled="loading"
+          :loading="loading"
+        >
+          Generate
+          <template v-slot:loader> Loading... </template>
+        </v-btn>
+        <v-btn
+          v-if="canDownload && !loading"
+          @click="onDownloadClick"
+          variant="outlined"
+          color="success"
+          icon="mdi-file-download"
+          class="ml-2"
+          size="small"
+        ></v-btn>
+      </div>
       <v-divider light thickness="1px" class="w-100"></v-divider>
       <div class="w-100">
         <v-radio-group
@@ -43,6 +54,7 @@
 
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue';
+import { saveAs } from 'file-saver';
 import { mosaic } from '../mosaic';
 
 type BackgroundMode = 'Mosaic' | 'Transparent';
@@ -52,6 +64,7 @@ const canvasRef = ref<HTMLCanvasElement | null>(null);
 const loading = ref<boolean>(false);
 const backgroundMode = ref<BackgroundMode>('Mosaic');
 const rotationMode = ref<RotationMode>('Rotate');
+const canDownload = ref<boolean>(false);
 
 onMounted(() => {
   if (!canvasRef.value) return;
@@ -71,6 +84,12 @@ async function onGenerateClick() {
   };
   mosaic(props.image, canvasRef.value!, options).then(() => {
     loading.value = false;
+    canDownload.value = true;
+  });
+}
+function onDownloadClick() {
+  canvasRef.value?.toBlob(function (blob) {
+    saveAs(blob, 'mosaic.png');
   });
 }
 </script>
