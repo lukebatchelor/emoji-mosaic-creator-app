@@ -7,7 +7,7 @@
       <p class="text-high-emphasis">Create awesome emoji mosaics!</p>
 
       <v-avatar color="info" size="150">
-        <v-img src="/obama-mos.png" alt="Obama" :cover="false"></v-img>
+        <v-img src="/obama-mos.png" alt="Obama" cover></v-img>
       </v-avatar>
       <v-file-input
         @change="onUpload"
