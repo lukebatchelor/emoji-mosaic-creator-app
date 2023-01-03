@@ -2,6 +2,8 @@
 
 Small little webapp for generating emoji mosaics from images
 
+![./mosaic.png](mosaic.png)
+
 # Credits
 
 Absolutely all of the heavy lifting was done by these librarys, I just glued them together
