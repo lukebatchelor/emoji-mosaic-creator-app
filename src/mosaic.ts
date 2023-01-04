@@ -1,18 +1,36 @@
 import { FastAverageColor } from 'fast-average-color';
 import colorDiff from 'color-diff';
 
-type Color = { R: number; G: number; B: number; A: number };
-type PalleteColor = Color & { emoji: string; x: number; y: number };
-type Palette = Array<PalleteColor>;
-type EmojiData = {
+export type Color = { R: number; G: number; B: number; A: number };
+export type PalleteColor = Color & { emoji: string; x: number; y: number };
+export type Palette = Array<PalleteColor>;
+export type EmojiData = {
   rows: number;
   cols: number;
   palette: Palette;
 };
+// a 2d array representing each grid element from an image
+// with it's average color and closest emoji
+export type EmojiPalette = {
+  average: Color;
+  closest: PalleteColor;
+}[][];
 
-const fac = new FastAverageColor();
 let emojiData: EmojiData;
 let spritesheet: HTMLImageElement;
+let emojiPalette: EmojiPalette;
+let emojiPaletteResolver: ((p: EmojiPalette) => void) | null = null;
+
+const worker = new Worker(new URL('./mosaic-worker', import.meta.url), {
+  type: 'module',
+});
+worker.onmessage = (e: MessageEvent<EmojiPalette>) => {
+  if (emojiPaletteResolver) {
+    emojiPaletteResolver(e.data);
+  } else {
+    console.log('Unable to resolve worker message');
+  }
+};
 
 type MosaicOptions = {
   gridSize: number;
@@ -26,21 +44,68 @@ export async function mosaic(
   opts: MosaicOptions
 ) {
   const gridSize = opts.gridSize || 32;
+  performance.mark('start-load-data');
   emojiData = emojiData ?? (await getEmojiData());
   spritesheet = spritesheet ?? (await getSpritesheet());
-  const averages = getAveragesGrid(img, gridSize);
+  performance.mark('end-load-data');
+
+  performance.mark('start-calc-averages');
+  emojiPalette =
+    emojiPalette ??
+    (await getEmojiPaletteFromWorker(img, emojiData.palette, gridSize));
+  performance.mark('end-calc-averages');
 
   clearCanvas(canvas);
   if (opts.background) {
-    drawAveragesToCanvas(averages, canvas, gridSize);
+    drawAveragesToCanvas(emojiPalette, canvas, gridSize);
   }
+  performance.mark('start-drawing');
   drawEmojis({
-    averages,
-    emojiData,
+    emojiPalette,
     spritesheet,
     canvas,
     gridSize,
     rotation: opts.rotation,
+  });
+  performance.mark('end-drawing');
+
+  const loadDataPerf = performance.measure(
+    'load-data',
+    'start-load-data',
+    'end-load-data'
+  );
+  const calcAveragesPerf = performance.measure(
+    'calc-averages',
+    'start-calc-averages',
+    'end-calc-averages'
+  );
+  const drawingPerf = performance.measure(
+    'drawing',
+    'start-drawing',
+    'end-drawing'
+  );
+  console.log({
+    loading: loadDataPerf.duration,
+    calcAverages: calcAveragesPerf.duration,
+    drawing: drawingPerf.duration,
+  });
+}
+
+async function getEmojiPaletteFromWorker(
+  img: HTMLImageElement,
+  palette: Palette,
+  gridSize: number
+) {
+  // const imgCanvas = new OffscreenCanvas(img.width, img.height);
+  // const ctx = imgCanvas.getContext('2d');
+  // ctx?.drawImage(img, 0, 0);
+  // const canvasWorker = (imgCanvas as any).transferControlToOffscreen();
+  const imgBitmap = await createImageBitmap(img);
+  return new Promise<EmojiPalette>((resolve) => {
+    worker.postMessage({ imgBitmap, palette, gridSize }, [imgBitmap]);
+    emojiPaletteResolver = (value: EmojiPalette) => {
+      resolve(value);
+    };
   });
 }
 
@@ -54,38 +119,8 @@ function getSizeOfImage(
   return { height, width, rows, cols };
 }
 
-/* 
-  Returns a 2d array of colors where each element is the 
-  average color for that particular cell 
-*/
-function getAveragesGrid(
-  img: HTMLImageElement,
-  gridSize: number = 32
-): Color[][] {
-  const { rows, cols } = getSizeOfImage(img, gridSize);
-  const averages: Color[][] = [];
-
-  for (let row = 0; row < rows; row++) {
-    averages[row] = [];
-    for (let col = 0; col < cols; col++) {
-      const ave = fac.getColor(img, {
-        algorithm: 'dominant',
-        ignoredColor: [0, 0, 0, 0], // ignore transparency
-        top: row * gridSize,
-        left: col * gridSize,
-        width: gridSize,
-        height: gridSize,
-      });
-      const [R, G, B, a] = ave.value;
-      averages[row][col] = { R, G, B, A: a / 255 };
-    }
-  }
-
-  return averages;
-}
-
 function drawAveragesToCanvas(
-  averages: Color[][],
+  emojiPalette: EmojiPalette,
   canvas: HTMLCanvasElement,
   gridSize: number = 32
 ) {
@@ -94,7 +129,7 @@ function drawAveragesToCanvas(
 
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
-      const { R, G, B, A } = averages[row][col];
+      const { R, G, B, A } = emojiPalette[row][col].average;
       ctx.fillStyle = `rgba(${R},${G},${B},${A})`;
       ctx.fillRect(col * gridSize, row * gridSize, gridSize, gridSize);
     }
@@ -117,24 +152,19 @@ async function getSpritesheet(): Promise<HTMLImageElement> {
 }
 
 function drawEmojis(opts: {
-  averages: Color[][];
-  emojiData: EmojiData;
+  emojiPalette: EmojiPalette;
   canvas: HTMLCanvasElement;
   spritesheet: HTMLImageElement;
   gridSize: number;
   rotation: boolean;
 }) {
-  const { averages, emojiData, spritesheet, canvas, gridSize, rotation } = opts;
-  const { palette } = emojiData;
-  const { rows: imgRows, cols: imgCols } = getSizeOfImage(canvas, gridSize);
+  const { emojiPalette, spritesheet, canvas, gridSize, rotation } = opts;
+  const { rows, cols } = getSizeOfImage(canvas, gridSize);
   const ctx = canvas.getContext('2d')!;
 
-  for (let row = 0; row < imgRows; row++) {
-    for (let col = 0; col < imgCols; col++) {
-      const closest = colorDiff.closest(
-        averages[row][col],
-        palette
-      ) as PalleteColor;
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const closest = emojiPalette[row][col].closest;
       const paletteX = closest.x * gridSize;
       const paletteY = closest.y * gridSize;
 
