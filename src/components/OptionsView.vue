@@ -96,7 +96,8 @@ function onDownloadClick() {
 
 <style scoped>
 canvas {
-  max-width: 250px;
+  max-width: 80vw;
+  max-height: 80vh;
   display: block;
   margin: auto;
 }
