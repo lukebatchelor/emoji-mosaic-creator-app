@@ -1,10 +1,18 @@
 import { FastAverageColor } from 'fast-average-color';
 import colorDiff from 'color-diff';
 
-type Color = { R: number; G: number; B: number; A: number; emoji?: string };
-type Palette = Required<Color>[];
+type Color = { R: number; G: number; B: number; A: number };
+type PalleteColor = Color & { emoji: string; x: number; y: number };
+type Palette = Array<PalleteColor>;
+type EmojiData = {
+  rows: number;
+  cols: number;
+  palette: Palette;
+};
 
 const fac = new FastAverageColor();
+let emojiData: EmojiData;
+let spritesheet: HTMLImageElement;
 
 type MosaicOptions = {
   gridSize: number;
@@ -18,13 +26,22 @@ export async function mosaic(
   opts: MosaicOptions
 ) {
   const gridSize = opts.gridSize || 32;
-  const palette = await getPalette();
+  emojiData = emojiData ?? (await getEmojiData());
+  spritesheet = spritesheet ?? (await getSpritesheet());
   const averages = getAveragesGrid(img, gridSize);
+
   clearCanvas(canvas);
   if (opts.background) {
     drawAveragesToCanvas(averages, canvas, gridSize);
   }
-  drawEmojis({ averages, palette, canvas, gridSize, rotation: opts.rotation });
+  drawEmojis({
+    averages,
+    emojiData,
+    spritesheet,
+    canvas,
+    gridSize,
+    rotation: opts.rotation,
+  });
 }
 
 function getSizeOfImage(
@@ -84,50 +101,74 @@ function drawAveragesToCanvas(
   }
 }
 
-async function getPalette() {
-  return fetch('/average-colors-deduped.json')
+async function getEmojiData() {
+  return fetch('/emoji-data.json')
     .then((res) => res.json())
-    .then((data: Record<string, [number, number, number, number]>) => {
-      const palette: Palette = [];
-      Object.entries(data).forEach(([emoji, [R, G, B, a]], idx) => {
-        palette[idx] = { R, G, B, A: a / 255, emoji };
-      });
-      return palette;
-    });
+    .then((data: EmojiData) => data);
+}
+
+async function getSpritesheet(): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = '/emoji-sheet.png';
+  });
 }
 
 function drawEmojis(opts: {
   averages: Color[][];
-  palette: Palette;
+  emojiData: EmojiData;
   canvas: HTMLCanvasElement;
+  spritesheet: HTMLImageElement;
   gridSize: number;
   rotation: boolean;
 }) {
-  const { averages, palette, canvas, gridSize, rotation } = opts;
-  const { rows, cols } = getSizeOfImage(canvas, gridSize);
+  const { averages, emojiData, spritesheet, canvas, gridSize, rotation } = opts;
+  const { palette } = emojiData;
+  const { rows: imgRows, cols: imgCols } = getSizeOfImage(canvas, gridSize);
   const ctx = canvas.getContext('2d')!;
 
-  for (let row = 0; row < rows; row++) {
-    for (let col = 0; col < cols; col++) {
+  for (let row = 0; row < imgRows; row++) {
+    for (let col = 0; col < imgCols; col++) {
       const closest = colorDiff.closest(
         averages[row][col],
         palette
-      ) as Required<Color>;
+      ) as PalleteColor;
+      const paletteX = closest.x * gridSize;
+      const paletteY = closest.y * gridSize;
 
-      const img = new Image();
-      img.src = `/emojis/${closest.emoji}`;
-      img.onload = () => {
-        if (rotation) {
-          const randAngle = -180 + Math.random() * 360;
-          ctx.save();
-          ctx.translate(col * 32, row * 32);
-          ctx.rotate((randAngle * Math.PI) / 180);
-          ctx.drawImage(img, -16, -16);
-          ctx.restore();
-        } else {
-          ctx.drawImage(img, col * 32, row * 32);
-        }
-      };
+      if (rotation) {
+        const offset = (gridSize / 2) * -1;
+        const randAngle = -180 + Math.random() * 360;
+        ctx.save();
+        ctx.translate(col * 32, row * 32);
+        ctx.rotate((randAngle * Math.PI) / 180);
+        ctx.drawImage(
+          spritesheet,
+          paletteX,
+          paletteY,
+          gridSize,
+          gridSize,
+          offset,
+          offset,
+          gridSize,
+          gridSize
+        );
+        ctx.restore();
+      } else {
+        ctx.drawImage(
+          spritesheet,
+          paletteX,
+          paletteY,
+          gridSize,
+          gridSize,
+          col * 32,
+          row * 32,
+          gridSize,
+          gridSize
+        );
+      }
     }
   }
 }

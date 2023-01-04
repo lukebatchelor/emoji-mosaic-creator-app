@@ -23,7 +23,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, defineEmits } from 'vue';
+import { ref } from 'vue';
 const emit = defineEmits<{ (e: 'fileUpload', file: File): void }>();
 const fileInput = ref<HTMLInputElement | null>(null);
 
