@@ -1,7 +1,14 @@
 <template>
   <v-app :theme="theme">
     <v-app-bar title="Emoji Mosaic Creator">
-      <v-btn :icon="themeIcon" @click="toggleTheme" class="d"></v-btn>
+      <template v-slot:prepend>
+        <v-btn
+          v-if="curView === 'Options'"
+          @click="onBackClick"
+          icon="mdi-arrow-left-circle"
+        ></v-btn>
+      </template>
+      <v-btn :icon="themeIcon" @click="toggleTheme"></v-btn>
     </v-app-bar>
     <v-main class="mt-2">
       <LandingView @file-upload="onFileUpload" v-if="curView === 'Landing'" />
@@ -36,5 +43,9 @@ function onFileUpload(uploadedFile: File) {
     curView.value = 'Options';
   };
   img.src = URL.createObjectURL(uploadedFile);
+}
+function onBackClick() {
+  image.value = null;
+  curView.value = 'Landing';
 }
 </script>
