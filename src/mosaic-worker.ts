@@ -15,7 +15,6 @@ type CalcRequest = {
 
 const fac = new FastAverageColor();
 const colorDiffCache = new Map();
-let cacheHits = 0;
 
 onmessage = function (e: MessageEvent<CalcRequest>) {
   const { imgBitmap, palette, gridSize } = e.data;
@@ -34,7 +33,6 @@ function getImageEmojiPalette(
 ): EmojiPalette {
   const { rows, cols } = getSizeOfImage(imgBitmap, gridSize);
   const averages: EmojiPalette = [];
-  cacheHits = 0;
 
   for (let row = 0; row < rows; row++) {
     averages[row] = [];
@@ -60,7 +58,6 @@ function getImageEmojiPalette(
 function memoizedColorDiff(color: Color, palette: Palette) {
   const key = JSON.stringify(color);
   if (colorDiffCache.has(key)) {
-    cacheHits++;
     return colorDiffCache.get(key);
   }
   const closest = colorDiff.closest(color, palette) as PalleteColor;

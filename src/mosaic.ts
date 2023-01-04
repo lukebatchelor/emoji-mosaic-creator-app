@@ -1,6 +1,3 @@
-import { FastAverageColor } from 'fast-average-color';
-import colorDiff from 'color-diff';
-
 export type Color = { R: number; G: number; B: number; A: number };
 export type PalleteColor = Color & { emoji: string; x: number; y: number };
 export type Palette = Array<PalleteColor>;
@@ -96,10 +93,6 @@ async function getEmojiPaletteFromWorker(
   palette: Palette,
   gridSize: number
 ) {
-  // const imgCanvas = new OffscreenCanvas(img.width, img.height);
-  // const ctx = imgCanvas.getContext('2d');
-  // ctx?.drawImage(img, 0, 0);
-  // const canvasWorker = (imgCanvas as any).transferControlToOffscreen();
   const imgBitmap = await createImageBitmap(img);
   return new Promise<EmojiPalette>((resolve) => {
     worker.postMessage({ imgBitmap, palette, gridSize }, [imgBitmap]);
