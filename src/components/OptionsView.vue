@@ -17,15 +17,7 @@
           Generate
           <template v-slot:loader> Loading... </template>
         </v-btn>
-        <v-btn
-          v-if="canDownload && !loading"
-          @click="onDownloadClick"
-          variant="outlined"
-          color="success"
-          icon="mdi-file-download"
-          class="ml-2"
-          size="small"
-        ></v-btn>
+        <SaveDialog :canvas-ref="canvasRef" v-if="canDownload && !loading" />
       </div>
       <v-divider light thickness="1px" class="w-100"></v-divider>
       <div class="w-100">
@@ -54,8 +46,8 @@
 
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue';
-import { saveAs } from 'file-saver';
 import { mosaic } from '../mosaic';
+import SaveDialog from './SaveDialog.vue';
 
 type BackgroundMode = 'Mosaic' | 'Transparent';
 type RotationMode = 'Rotate' | 'NoRotate';
@@ -85,11 +77,6 @@ async function onGenerateClick() {
   mosaic(props.image, canvasRef.value!, options).then(() => {
     loading.value = false;
     canDownload.value = true;
-  });
-}
-function onDownloadClick() {
-  canvasRef.value?.toBlob(function (blob) {
-    saveAs(blob!, 'mosaic.png');
   });
 }
 </script>
