@@ -5,19 +5,24 @@
       :style="{ gap: '20px' }"
     >
       <p class="text-high-emphasis">Create awesome emoji mosaics!</p>
-
-      <v-avatar color="info" size="150">
-        <v-img src="/obama-mos.png" alt="Obama" cover></v-img>
-      </v-avatar>
+      <v-card>
+        <v-img
+          src="/scream.jpeg"
+          max-height="80vh"
+          max-width="80vw"
+          width="400"
+          class=""
+        ></v-img>
+      </v-card>
       <v-file-input
         @change="onUpload"
         ref="fileInput"
         class="d-none"
         label="File input"
       ></v-file-input>
-      <v-btn @click="fileInput?.click()" round color="primary" dark
-        >Upload an image</v-btn
-      >
+      <v-btn @click="fileInput?.click()" round color="primary" dark>
+        Upload an image
+      </v-btn>
     </v-sheet>
   </v-container>
 </template>
