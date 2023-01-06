@@ -3,11 +3,11 @@
     <template v-slot:activator>
       <v-btn
         @click="showDialog = true"
-        variant="outlined"
+        variant="tonal"
         color="success"
-        icon="mdi-file-download"
-        class="ml-2"
-        size="small"
+        icon="mdi-share-variant"
+        class="ml-2 pa-2"
+        size="medium"
       ></v-btn>
     </template>
     <v-card class="pa-4">
@@ -25,7 +25,7 @@
         <v-list
           v-else
           lines="one"
-          class="w-100 px-4 py-0"
+          class="w-100 px-2 py-2"
           style="border: 1px solid grey"
         >
           <v-list-item
@@ -50,6 +50,7 @@
           </v-list-item>
         </v-list>
       </div>
+
       <v-card-actions>
         <v-btn
           v-if="showSizeButton"
@@ -63,11 +64,12 @@
         <v-btn
           color="primary"
           right
-          variant="outlined"
-          @click="showDialog = false"
-          >Close</v-btn
+          variant="tonal"
+          @click="onShareClick"
+          v-if="supportsShare"
+          >Share</v-btn
         >
-        <v-btn color="primary" right variant="flat" @click="onDownloadClick"
+        <v-btn color="primary" right variant="tonal" @click="onDownloadClick"
           >Download</v-btn
         >
       </v-card-actions>
@@ -86,6 +88,7 @@ const showDialog = ref(false);
 const fetchingSizes = ref(false);
 const showSizeButton = ref(false);
 const selected = ref(DEFAULT_SELECTED);
+const supportsShare = ref<boolean>(!!window.navigator.share);
 
 type QualityOption = {
   name: string;
@@ -93,6 +96,7 @@ type QualityOption = {
   quality?: number;
   size?: number;
   blob?: Blob;
+  fileName?: string;
 };
 const qualityOptions: QualityOption[] = [
   { name: 'PNG Full', type: 'image/png' },
@@ -118,16 +122,12 @@ async function getQualitySizes() {
   fetchingSizes.value = true;
   performance.mark('start-get-sizes');
   const blobs = await Promise.all(
-    qualityOptions.map(
-      (q) =>
-        new Promise<Blob | null>((resolve) => {
-          props.canvasRef!.toBlob(resolve, q.type, q.quality);
-        })
-    )
+    qualityOptions.map((q) => getBlobAndNameForQuality(q))
   );
-  blobs.forEach((blob, idx) => {
+  blobs.forEach(({ blob, fileName }, idx) => {
     qualityOptions[idx].blob = blob!;
     qualityOptions[idx].size = blob!.size;
+    qualityOptions[idx].fileName = fileName;
   });
   performance.mark('end-get-sizes');
   const perf = performance.measure(
@@ -140,22 +140,41 @@ async function getQualitySizes() {
   showSizeButton.value = false;
 }
 
-function onDownloadClick() {
+async function onDownloadClick() {
   const quality = qualityOptions.find((opt) => opt.name === selected.value);
   if (!quality) return;
-  const fileType = quality.type.split('/')[1];
-  if (quality.blob) {
-    return saveAs(quality.blob, `mosaic.${fileType}`);
-  }
-  props.canvasRef!.toBlob(
-    (blob) => saveAs(blob!, `mosaic.${fileType}`),
-    quality.type,
-    quality.quality
-  );
+  const { blob, fileName } =
+    quality || (await getBlobAndNameForQuality(quality));
+  return saveAs(blob!, fileName);
 }
 
 function humanReadableFileSize(fileSize: number): string {
   if (fileSize > 1_000_000) return `${(fileSize / 1_000_000).toFixed(2)} mb`;
   else return `${(fileSize / 1000).toFixed(2)} kb`;
+}
+
+async function getBlobAndNameForQuality(quality: QualityOption) {
+  const fileType = quality.type.split('/')[1];
+  const suffix = Math.floor(Math.random() * 1000);
+  const fileName = `mosaic-${suffix}.${fileType}`;
+  return new Promise<{ blob: Blob; fileName: string }>((resolve) => {
+    props.canvasRef!.toBlob(
+      (b) => resolve({ blob: b!, fileName }),
+      quality.type,
+      quality.quality
+    );
+  });
+}
+
+async function onShareClick() {
+  const quality = qualityOptions.find((opt) => opt.name === selected.value);
+  if (!quality) return;
+  const { blob, fileName } =
+    quality || (await getBlobAndNameForQuality(quality));
+  await navigator.share({
+    files: [new File([blob!], fileName!)],
+    title: 'Emoji Mosaic',
+    text: 'Check out my emoji mosaic!',
+  });
 }
 </script>
