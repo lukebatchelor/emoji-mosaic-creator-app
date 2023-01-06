@@ -1,6 +1,8 @@
 import { CalcRequest } from './types';
 import { getImageEmojiPalette } from './mosaic-browser';
 
+declare let self: ServiceWorkerGlobalScope;
+
 onmessage = function (e: MessageEvent<CalcRequest>) {
   const { imgBitmap, palette, gridSize } = e.data;
   const emojiPalette = getImageEmojiPalette(imgBitmap, palette, gridSize);

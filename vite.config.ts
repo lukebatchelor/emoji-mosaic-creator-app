@@ -2,6 +2,8 @@
 import vue from '@vitejs/plugin-vue';
 import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify';
 import { VitePWA } from 'vite-plugin-pwa';
+import basicSsl from '@vitejs/plugin-basic-ssl';
+
 // Utilities
 import { defineConfig } from 'vite';
 import { fileURLToPath, URL } from 'node:url';
@@ -16,8 +18,16 @@ export default defineConfig({
     vuetify({
       autoImport: true,
     }),
+    process.env.ENABLE_PWA_DEV ? basicSsl() : undefined,
     VitePWA({
       registerType: 'autoUpdate',
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
+      devOptions: {
+        enabled: true,
+        type: 'module',
+      },
       manifest: {
         name: 'Emoji Mosaic Creator',
         short_name: 'Emoji Mosaic',
@@ -33,6 +43,20 @@ export default defineConfig({
             type: 'image/png',
           },
         ],
+        // @ts-ignore share target is valid, I just can't extend the interface for it correctly
+        share_target: {
+          action: './upload',
+          method: 'POST',
+          enctype: 'multipart/form-data',
+          params: {
+            files: [
+              {
+                name: 'file',
+                accept: ['image/*'],
+              },
+            ],
+          },
+        },
         start_url: '.',
         theme_color: '#121212',
         background_color: '#212121',
@@ -51,3 +75,5 @@ export default defineConfig({
     port: 3000,
   },
 });
+
+if (process.env.ENABLE_PWA_DEV) console.log('here');

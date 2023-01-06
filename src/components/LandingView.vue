@@ -16,6 +16,7 @@
       </v-card>
       <v-file-input
         @change="onUpload"
+        id="file"
         ref="fileInput"
         class="d-none"
         label="File input"
@@ -35,6 +36,6 @@ const fileInput = ref<HTMLInputElement | null>(null);
 function onUpload() {
   if (!fileInput.value || !fileInput.value?.files?.length) return;
   const file = fileInput.value.files[0];
-  emit('fileUpload', file);
+  // emit('fileUpload', file);
 }
 </script>

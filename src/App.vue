@@ -36,7 +36,7 @@ const image = ref<HTMLImageElement | null>(null);
 function toggleTheme() {
   theme.value = theme.value === 'light' ? 'dark' : 'light';
 }
-function onFileUpload(uploadedFile: File) {
+function onFileUpload(uploadedFile: File | Blob) {
   const img = new Image();
   img.onload = () => {
     image.value = img;
