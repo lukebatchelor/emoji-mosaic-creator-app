@@ -53,6 +53,7 @@ function onBackClick() {
 }
 const q = new URLSearchParams(window.location.search);
 if (q.has('uploaded')) {
+  alert();
   try {
     caches.open('uploadedImages').then((cache) => {
       cache
@@ -66,9 +67,12 @@ if (q.has('uploaded')) {
             'load',
             () => {
               console.log(reader.result);
-              const i = document.createElement('img');
-              i.src = reader.result as string;
-              document.body.append(i);
+              const img = document.createElement('img');
+              img.onload = () => {
+                image.value = img;
+                curView.value = 'Landing';
+              };
+              img.src = reader.result as string;
             },
             false
           );

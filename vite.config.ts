@@ -18,7 +18,7 @@ export default defineConfig({
     vuetify({
       autoImport: true,
     }),
-    process.env.ENABLE_PWA_DEV ? basicSsl() : undefined,
+    process.env.SSL ? basicSsl() : undefined,
     VitePWA({
       registerType: 'autoUpdate',
       strategies: 'injectManifest',
@@ -75,5 +75,3 @@ export default defineConfig({
     port: 3000,
   },
 });
-
-if (process.env.ENABLE_PWA_DEV) console.log('here');
