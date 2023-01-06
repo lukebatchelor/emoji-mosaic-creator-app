@@ -28,7 +28,7 @@ self.addEventListener('fetch', (event) => {
       await cache.put('upload', new Response(upload));
       console.log('cached uploaded image');
       const res = { success: true };
-      return new Response(JSON.stringify(res));
+      return Response.redirect('/?uploaded', 303);
     })()
   );
 });
