@@ -51,13 +51,22 @@ function onBackClick() {
 const q = new URLSearchParams(window.location.search);
 if (q.has('uploaded')) {
   alert('redirected');
-  caches.open('uploadedImages').then((cache) => {
-    cache
-      .match('upload')
-      .then((r) => r?.blob())
-      .then((blob) => {
-        onFileUpload(blob!);
-      });
-  });
+  try {
+    caches.open('uploadedImages').then((cache) => {
+      alert('opened cache');
+      cache
+        .match('upload')
+        .then((r) => {
+          alert('got cache');
+          return r?.blob();
+        })
+        .then((blob) => {
+          onFileUpload(blob!);
+        });
+    });
+  } catch (e) {
+    alert('error');
+    alert(e);
+  }
 }
 </script>
