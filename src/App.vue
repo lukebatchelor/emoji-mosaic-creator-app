@@ -61,6 +61,7 @@ if (q.has('uploaded')) {
           return r?.blob();
         })
         .then((blob) => {
+          alert(blob);
           onFileUpload(blob!);
         });
     });
