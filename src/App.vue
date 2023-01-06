@@ -50,6 +50,13 @@ function onBackClick() {
 }
 const q = new URLSearchParams(window.location.search);
 if (q.has('uploaded')) {
-  alert('Uploaded!');
+  caches.open('uploadedImages').then((cache) => {
+    cache
+      .match('upload')
+      .then((r) => r?.blob())
+      .then((blob) => {
+        onFileUpload(blob!);
+      });
+  });
 }
 </script>
