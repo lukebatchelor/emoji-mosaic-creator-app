@@ -48,4 +48,8 @@ function onBackClick() {
   image.value = null;
   curView.value = 'Landing';
 }
+const q = new URLSearchParams(window.location.search);
+if (q.has('uploaded')) {
+  alert('Uploaded!');
+}
 </script>
