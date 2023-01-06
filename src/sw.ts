@@ -26,11 +26,7 @@ self.addEventListener('fetch', (event) => {
       const upload = formData.get('upload');
       const cache = await caches.open('uploadedImages');
       await cache.put('upload', new Response(upload));
-      console.log('cached uploaded image');
-      const res = { success: true };
       return Response.redirect('/?uploaded', 303);
     })()
   );
 });
-
-console.log('hello from sw.js!');

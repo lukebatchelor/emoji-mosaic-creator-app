@@ -54,43 +54,18 @@ function onBackClick() {
 const q = new URLSearchParams(window.location.search);
 onMounted(() => {
   if (q.has('uploaded')) {
-    alert('uploaded');
     try {
       caches.open('uploadedImages').then((cache) => {
         cache
           .match('upload')
-          .then((r) => {
-            return r?.blob();
-          })
+          .then((r) => r?.blob())
           .then((blob) => {
-            // const reader = new FileReader();
-            // reader.addEventListener(
-            //   'load',
-            //   () => {
-            //     console.log(reader.result);
-            //     const img = document.createElement('img');
-            //     img.onload = () => {
-            //       console.log('success');
-            //       image.value = img;
-            //       curView.value = 'Landing';
-            //     };
-            //     img.onerror = (e) => {
-            //       alert(e);
-            //     };
-            //     img.src = reader.result as string;
-            //   },
-            //   false
-            // );
-            // reader.readAsDataURL(blob!);
-
-            // alert(blob);
-            // const url = URL.createObjectURL(blob!);
-            // window.location.href = url;
+            window.history.replaceState(null, '', window.location.pathname);
             onFileUpload(blob!);
           });
       });
     } catch (e) {
-      alert('error');
+      alert('Error Uploading file');
       alert(e);
     }
   }
