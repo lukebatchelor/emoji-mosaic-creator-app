@@ -51,7 +51,7 @@ export default defineConfig({
           params: {
             files: [
               {
-                name: 'file',
+                name: 'upload',
                 accept: ['image/*'],
               },
             ],
