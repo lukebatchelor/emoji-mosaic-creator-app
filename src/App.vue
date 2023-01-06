@@ -50,6 +50,7 @@ function onBackClick() {
 }
 const q = new URLSearchParams(window.location.search);
 if (q.has('uploaded')) {
+  alert('redirected');
   caches.open('uploadedImages').then((cache) => {
     cache
       .match('upload')
