@@ -61,9 +61,22 @@ if (q.has('uploaded')) {
           return r?.blob();
         })
         .then((blob) => {
-          alert(blob);
-          const url = URL.createObjectURL(blob!);
-          window.location.href = url;
+          const reader = new FileReader();
+          reader.addEventListener(
+            'load',
+            () => {
+              console.log(reader.result);
+              const i = document.createElement('img');
+              i.src = reader.result as string;
+              document.body.append(i);
+            },
+            false
+          );
+          reader.readAsDataURL(blob!);
+
+          // alert(blob);
+          // const url = URL.createObjectURL(blob!);
+          // window.location.href = url;
           // onFileUpload(blob!);
         });
     });
