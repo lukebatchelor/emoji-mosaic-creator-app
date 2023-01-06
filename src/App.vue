@@ -72,6 +72,9 @@ if (q.has('uploaded')) {
                 image.value = img;
                 curView.value = 'Landing';
               };
+              img.onerror = (e) => {
+                alert(e);
+              };
               img.src = reader.result as string;
             },
             false
