@@ -42,6 +42,9 @@ function onFileUpload(uploadedFile: File | Blob) {
     image.value = img;
     curView.value = 'Options';
   };
+  img.onerror = () => {
+    alert(img.src);
+  };
   img.src = URL.createObjectURL(uploadedFile);
 }
 function onBackClick() {
@@ -50,14 +53,11 @@ function onBackClick() {
 }
 const q = new URLSearchParams(window.location.search);
 if (q.has('uploaded')) {
-  alert('redirected');
   try {
     caches.open('uploadedImages').then((cache) => {
-      alert('opened cache');
       cache
         .match('upload')
         .then((r) => {
-          alert('got cache');
           return r?.blob();
         })
         .then((blob) => {
