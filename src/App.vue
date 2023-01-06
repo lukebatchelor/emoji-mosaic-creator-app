@@ -62,7 +62,9 @@ if (q.has('uploaded')) {
         })
         .then((blob) => {
           alert(blob);
-          onFileUpload(blob!);
+          const url = URL.createObjectURL(blob!);
+          window.location.href = url;
+          // onFileUpload(blob!);
         });
     });
   } catch (e) {
