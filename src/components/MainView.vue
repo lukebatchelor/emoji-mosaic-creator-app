@@ -13,9 +13,12 @@
           @click="onGenerateClick"
           :disabled="loading"
           :loading="loading"
+          class="generateBtn"
         >
           Generate
-          <template v-slot:loader> Loading... </template>
+          <template v-slot:loader>
+            <div class="generateBtn">Loading... {{ calcProgress }}</div>
+          </template>
         </v-btn>
         <SaveDialog :canvas-ref="canvasRef" v-if="canDownload && !loading" />
       </div>
@@ -45,18 +48,21 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue';
-import { mosaic } from '../mosaic';
+import { ref, onMounted, onUnmounted } from 'vue';
+import { type MosaicOptions } from '../types';
+import { mosaic, clearPaletteCache } from '../mosaic';
 import SaveDialog from './SaveDialog.vue';
 
 type BackgroundMode = 'Mosaic' | 'Transparent';
 type RotationMode = 'Rotate' | 'NoRotate';
+
 const props = defineProps<{ image: HTMLImageElement }>();
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const loading = ref<boolean>(false);
 const backgroundMode = ref<BackgroundMode>('Mosaic');
 const rotationMode = ref<RotationMode>('Rotate');
 const canDownload = ref<boolean>(false);
+const calcProgress = ref<string>('');
 
 onMounted(() => {
   if (!canvasRef.value) return;
@@ -67,17 +73,27 @@ onMounted(() => {
   ctx?.drawImage(props.image, 0, 0);
 });
 
+onUnmounted(() => {
+  clearPaletteCache();
+});
+
 async function onGenerateClick() {
+  if (!canvasRef.value) return;
   loading.value = true;
-  const options = {
+  const options: MosaicOptions = {
     gridSize: 32,
     rotation: rotationMode.value === 'Rotate',
     background: backgroundMode.value === 'Mosaic',
+    onProgress,
   };
-  mosaic(props.image, canvasRef.value!, options).then(() => {
-    loading.value = false;
-    canDownload.value = true;
-  });
+  await mosaic(props.image, canvasRef.value, options);
+  loading.value = false;
+  canDownload.value = true;
+}
+
+function onProgress(progress: number) {
+  const progressStr = String((progress * 100).toFixed(1)) + '%';
+  calcProgress.value = progressStr;
 }
 </script>
 
@@ -90,5 +106,8 @@ canvas {
 }
 .loadingFilter {
   filter: brightness(0.3);
+}
+.generateBtn {
+  min-width: 150px;
 }
 </style>

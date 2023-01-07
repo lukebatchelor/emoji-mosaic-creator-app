@@ -5,7 +5,7 @@ import { Image, createCanvas } from 'canvas';
 const GRID_SIZE = 32;
 const emojisDir = './emojis';
 const jsonOutputFile = './public/emoji-data.json';
-const spriteSheetOutputFile = './public/emoji-sheet.png';
+const spritesheetOutputFile = './public/emoji-sheet.png';
 
 const averageColors = [];
 
@@ -64,13 +64,13 @@ const ctx = canvas.getContext('2d');
   };
   fs.writeFileSync(jsonOutputFile, JSON.stringify(emojiData));
 
-  console.log(`Writing spritesheet file to ${spriteSheetOutputFile}`);
+  console.log(`Writing spritesheet file to ${spritesheetOutputFile}`);
   await writeSpritesheetToFile();
 })();
 
 async function writeSpritesheetToFile() {
   return new Promise((resolve, reject) => {
-    const out = fs.createWriteStream(spriteSheetOutputFile);
+    const out = fs.createWriteStream(spritesheetOutputFile);
     const stream = canvas.createPNGStream();
     stream.pipe(out);
     stream.on('finish', resolve);

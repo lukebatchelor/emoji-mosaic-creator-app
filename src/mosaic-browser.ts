@@ -19,10 +19,12 @@ const colorDiffCache = new Map();
 export function getImageEmojiPalette(
   img: HTMLImageElement | ImageBitmap,
   palette: Palette,
-  gridSize: number = 32
+  gridSize: number = 32,
+  onProgress?: (progress: number) => void
 ): EmojiPalette {
   const { rows, cols } = getSizeOfImage(img, gridSize);
   const averages: EmojiPalette = [];
+  const totalCells = rows * cols;
 
   for (let row = 0; row < rows; row++) {
     averages[row] = [];
@@ -39,6 +41,7 @@ export function getImageEmojiPalette(
       const average = { R, G, B, A: a / 255 };
       const closest = memoizedColorDiff(average, palette);
       averages[row][col] = { average, closest };
+      if (onProgress) onProgress((row * cols + col) / totalCells);
     }
   }
 
@@ -82,19 +85,19 @@ export function drawAveragesToCanvas(
   }
 }
 
-export async function getEmojiData() {
-  return fetch('/emoji-data.json')
+export async function getEmojiSpritesAndData() {
+  const emojiDataJson = fetch('/emoji-data.json')
     .then((res) => res.json())
     .then((data: EmojiData) => data);
-}
-
-export async function getSpritesheet(): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
+  const spritesheet = new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
     img.onerror = reject;
     img.src = '/emoji-sheet.png';
   });
+  return Promise.all([emojiDataJson, spritesheet]).then(
+    ([emojiData, spritesheet]) => ({ emojiData, spritesheet })
+  );
 }
 
 export function drawEmojis(opts: {

@@ -13,14 +13,28 @@ export type EmojiPalette = {
   closest: PalleteColor;
 }[][];
 
+export type MosaicOptions = {
+  gridSize: number;
+  background: boolean;
+  rotation: boolean;
+  onProgress?: (progress: number) => void;
+};
+
 export type CalcRequest = {
   imgBitmap: ImageBitmap;
   palette: Palette;
   gridSize: number;
 };
 
-export type MosaicOptions = {
-  gridSize: number;
-  background: boolean;
-  rotation: boolean;
+export type CalcResponse = CalcProgressResponse | CalcCompleteResponse;
+
+type CalcCompleteResponse = {
+  event: 'calc-complete';
+  emojiPalette: EmojiPalette;
+};
+
+/* progress will be a number between 0 and 1 */
+type CalcProgressResponse = {
+  event: 'calc-progress';
+  progress: number;
 };
