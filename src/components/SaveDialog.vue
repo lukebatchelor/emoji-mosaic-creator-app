@@ -172,7 +172,7 @@ async function onShareClick() {
   const { blob, fileName } =
     quality || (await getBlobAndNameForQuality(quality));
   await navigator.share({
-    files: [new File([blob!], fileName!)],
+    files: [new File([blob!], fileName!, { type: blob!.type })],
     title: 'Emoji Mosaic',
     text: 'Check out my emoji mosaic!',
   });
