@@ -28,6 +28,13 @@ export default defineConfig({
         enabled: true,
         type: 'module',
       },
+      injectManifest: {
+        globPatterns: [
+          // only js, css and html are here by default
+          '**/*.{js,css,html,png,jpg,jpeg,json,ico,woff,woff2,ttf,eot}',
+        ],
+        maximumFileSizeToCacheInBytes: 3_500_000,
+      },
       manifest: {
         name: 'Emoji Mosaic Creator',
         short_name: 'Emoji Mosaic',
